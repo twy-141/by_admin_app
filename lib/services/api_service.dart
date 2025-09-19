@@ -1,63 +1,164 @@
-import 'package:by_admin_app/services/storage_service.dart';
+// lib/services/api_service.dart
 import 'package:dio/dio.dart';
+import 'package:by_admin_app/services/storage_service.dart';
+
+// 统一响应模型 - 根据你的实际结构调整
+class ApiResponse<T> {
+  final int code;
+  final String msg;
+  final T? data;
+
+  ApiResponse({
+    required this.code,
+    required this.msg,
+    this.data,
+  });
+
+  bool get success => code == 200;
+
+  factory ApiResponse.fromJson(Map<String, dynamic> json, T Function(dynamic) fromJsonT) {
+    return ApiResponse<T>(
+      code: json['code'] ?? 0,
+      msg: json['msg'] ?? '',
+      data: json['data'] != null ? fromJsonT(json['data']) : null,
+    );
+  }
+}
+
+// 自定义异常
+class ApiException implements Exception {
+  final String message;
+  final int? code;
+
+  ApiException(this.message, {this.code});
+
+  @override
+  String toString() => 'ApiException: $message${code != null ? ' (code: $code)' : ''}';
+}
 
 class ApiService {
-  final Dio _dio = Dio(
-    BaseOptions(
-      baseUrl: 'https://qmdzapi.qunmeng.club/', // 你的 API 地址
-      connectTimeout: const Duration(seconds: 5000), // 连接超时时间
-      receiveTimeout: const Duration(seconds: 3000), // 接收超时时间
-    ),
-  );
+  static final ApiService _instance = ApiService._internal();
+  factory ApiService() => _instance;
+  
+  late final Dio _dio;
 
-  // 添加拦截器（例如统一添加 token）
-  ApiService() {
-    _dio.interceptors.add(
-      InterceptorsWrapper(
-        onRequest: (options, handler) async {
-          // 从本地存储获取token并添加到请求头
-          final token = await StorageService.getString('token');
-          if (token != null) {
-            options.headers['Authorization'] = token;
-          }
-          return handler.next(options);
-        },
-        onResponse: (response, handler) async {
-          // 检查返回数据中的code字段是否为401
-          final responseData = response.data;
-          if (responseData is Map && responseData['code'] == 401) {
-            // 清除本地token
-            await StorageService.remove('token');
-
-            // 可以在这里跳转到登录页或抛出异常
-            // 抛出一个自定义的DioException来触发错误处理
-            final error = DioException(
-              requestOptions: response.requestOptions,
-              response: response,
-              error: 'Authentication failed: code 401',
-              type: DioExceptionType.badResponse,
-            );
-            return handler.reject(error);
-          }
-          return handler.next(response);
-        },
-
-        onError: (DioException e, handler) async {
-          // 处理401未授权错误
-          if (e.response?.statusCode == 401) {
-            // 清除本地token
-            await StorageService.remove('token');
-
-            // 这里可以跳转到登录页
-            // 需要获取navigator context，可以通过全局navigatorKey
-            // Navigator.of(navigatorKey.currentContext!).pushReplacementNamed('/login');
-
-            // 或者抛出特定异常让调用方处理
-            return handler.reject(e);
-          }
-          return handler.next(e);
+  ApiService._internal() {
+    _dio = Dio(
+      BaseOptions(
+        baseUrl: 'https://qmdzapi.qunmeng.club/',
+        connectTimeout: const Duration(seconds: 30),
+        receiveTimeout: const Duration(seconds: 30),
+        headers: {
+          'Content-Type': 'application/json',
         },
       ),
     );
+
+    _setupInterceptors();
+  }
+
+  void _setupInterceptors() {
+    _dio.interceptors.add(InterceptorsWrapper(
+      onRequest: _onRequest,
+      onResponse: _onResponse,
+      onError: _onError,
+    ));
+  }
+
+  Future<void> _onRequest(RequestOptions options, RequestInterceptorHandler handler) async {
+    final token = await StorageService.getString('token');
+    if (token != null) {
+      options.headers['Authorization'] = token;
+    }
+    handler.next(options);
+  }
+
+  Future<void> _onResponse(Response response, ResponseInterceptorHandler handler) async {
+    handler.next(response);
+  }
+
+  Future<void> _onError(DioException e, ErrorInterceptorHandler handler) async {
+    if (e.response?.statusCode == 401) {
+      await StorageService.remove('token');
+      // 这里可以添加跳转到登录页的逻辑
+    }
+    handler.next(e);
+  }
+
+  // 类型安全的 GET 请求
+  Future<ApiResponse<T>> get<T>(
+    String path, {
+    Map<String, dynamic>? queryParameters,
+    T Function(dynamic)? fromJson,
+    CancelToken? cancelToken,
+  }) async {
+    try {
+      final response = await _dio.get(
+        path,
+        queryParameters: queryParameters,
+        cancelToken: cancelToken,
+      );
+      
+      return _handleResponse<T>(response, fromJson);
+    } on DioException catch (e) {
+      throw _handleDioError(e);
+    }
+  }
+
+  // 类型安全的 POST 请求
+  Future<ApiResponse<T>> post<T>(
+    String path, {
+    dynamic data,
+    Map<String, dynamic>? queryParameters,
+    T Function(dynamic)? fromJson,
+    CancelToken? cancelToken,
+  }) async {
+    try {
+      final response = await _dio.post(
+        path,
+        data: data,
+        queryParameters: queryParameters,
+        cancelToken: cancelToken,
+      );
+      
+      return _handleResponse<T>(response, fromJson);
+    } on DioException catch (e) {
+      throw _handleDioError(e);
+    }
+  }
+
+  // 统一处理响应
+  ApiResponse<T> _handleResponse<T>(Response response, T Function(dynamic)? fromJson) {
+    if (response.data is! Map<String, dynamic>) {
+      throw ApiException('Invalid response format');
+    }
+
+    final responseData = response.data as Map<String, dynamic>;
+    
+    // 如果不需要解析 data 字段，直接返回整个响应
+    if (fromJson == null) {
+      return ApiResponse<T>(
+        code: responseData['code'] ?? 0,
+        msg: responseData['msg'] ?? '',
+        data: responseData as T,
+      );
+    }
+
+    return ApiResponse<T>.fromJson(responseData, fromJson);
+  }
+
+  // 统一处理错误
+  ApiException _handleDioError(DioException e) {
+    if (e.response != null) {
+      final responseData = e.response!.data;
+      if (responseData is Map<String, dynamic>) {
+        return ApiException(
+          responseData['msg'] ?? e.message ?? '请求失败',
+          code: responseData['code'] ?? e.response?.statusCode,
+        );
+      }
+    }
+    
+    return ApiException(e.message ?? '网络请求失败', code: e.response?.statusCode);
   }
 }

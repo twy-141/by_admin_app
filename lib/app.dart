@@ -4,7 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 import 'providers/auth_provider.dart';
-import 'screens/login_screen.dart';
+import 'screens/login/login_screen.dart';
 
 class MyApp extends StatelessWidget {
   MyApp({super.key});
@@ -28,7 +28,7 @@ class MyApp extends StatelessWidget {
     // 路由重定向逻辑（例如：根据登录状态跳转）
     redirect: (BuildContext context, GoRouterState state) async {
       final authProvider = Provider.of<AuthProvider>(context, listen: false);
-      await authProvider.getToken();
+      // await authProvider.getToken();
       final bool isLoggedIn = authProvider.isAuth;
       final bool goingToLogin = state.uri.path == '/login';
 
