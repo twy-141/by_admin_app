@@ -3,6 +3,7 @@ import 'package:by_admin_app/tab_container.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
+import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'providers/auth_provider.dart';
 import 'screens/login/login_screen.dart';
 
@@ -54,14 +55,21 @@ class MyApp extends StatelessWidget {
         ChangeNotifierProvider(create: (_) => TabProvider()),
         // 可以继续添加其他 Provider
       ],
-      child: MaterialApp.router(
-        title: 'My Flutter App',
-        theme: ThemeData(
-          primarySwatch: Colors.blue,
-          splashColor: Colors.transparent, // 去除水波纹效果
-          highlightColor: Colors.transparent, // 去除高亮效果
-        ),
-        routerConfig: _router, // 使用 GoRouter 的路由配置
+      child: ScreenUtilInit(
+        designSize: const Size(375, 812), // 使用 iPhone 13 的设计尺寸
+        minTextAdapt: true,
+        splitScreenMode: true,
+        builder: (_, child) {
+          return MaterialApp.router(
+            title: 'My Flutter App',
+            theme: ThemeData(
+              primarySwatch: Colors.blue,
+              splashColor: Colors.transparent, // 去除水波纹效果
+              highlightColor: Colors.transparent, // 去除高亮效果
+            ),
+            routerConfig: _router, // 使用 GoRouter 的路由配置
+          );
+        },
       ),
     );
   }
