@@ -29,7 +29,7 @@ class MyApp extends StatelessWidget {
     // 路由重定向逻辑（例如：根据登录状态跳转）
     redirect: (BuildContext context, GoRouterState state) async {
       final authProvider = Provider.of<AuthProvider>(context, listen: false);
-      // await authProvider.getToken();
+      await authProvider.getToken();
       final bool isLoggedIn = authProvider.isAuth;
       final bool goingToLogin = state.uri.path == '/login';
 
@@ -61,9 +61,10 @@ class MyApp extends StatelessWidget {
         splitScreenMode: true,
         builder: (_, child) {
           return MaterialApp.router(
-            title: 'My Flutter App',
+            title: '伴友之家',
             theme: ThemeData(
-              primarySwatch: Colors.blue,
+              scaffoldBackgroundColor: Color(0xffF8F9FD),
+              primarySwatch: Colors.blue, // 设置主题颜色
               splashColor: Colors.transparent, // 去除水波纹效果
               highlightColor: Colors.transparent, // 去除高亮效果
             ),

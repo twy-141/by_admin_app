@@ -13,11 +13,11 @@ class LoginScreen extends StatefulWidget {
 }
 
 class _LoginScreenState extends State<LoginScreen> {
-  final UserService _userService = UserService();
+  final UserService _userService = UserService(); // 用户服务
   bool _loading = false;
-  final _formKey = GlobalKey<FormState>();
-  final _usernameController = TextEditingController();
-  final _passwordController = TextEditingController();
+  final _formKey = GlobalKey<FormState>(); //表单验证
+  final _usernameController = TextEditingController(); // 用户名
+  final _passwordController = TextEditingController(); // 密码
   bool _obscurePassword = true;
 
   // 卸载时释放资源
@@ -29,30 +29,21 @@ class _LoginScreenState extends State<LoginScreen> {
   }
 
   Future<void> _login() async {
-    if(_loading) return;
+    if (_loading) return;
     if (_formKey.currentState?.validate() ?? false) {
-       setState(() => _loading = true);
-       final loginResponse = await _userService.login(_usernameController.text, _passwordController.text);
-       if (loginResponse != null) {
-        //  GoRouter.of(context).push('/home');
-       } else {
-         print('登录失败');
-       }
-       setState(() => _loading = false);
-    } else {
-      // 如果表单验证失败，显示错误信息
-      // 登录接口
-      // final loginResponse = await _api.post<User>(
-      //   '/auth/login',
-      //   data: {'account': 'user123', 'password': 'password123'},
-      //   fromJson: (data) => User.fromJson(data),
-      // );
-
-      // final authProvider = Provider.of<AuthProvider>(context, listen: false);
-      // await authProvider.login(
-      //   _usernameController.text,
-      //   _passwordController.text,
-      // );
+      setState(() => _loading = true);
+      final authProvider = Provider.of<AuthProvider>(context, listen: false);
+      final loginResponse = await _userService.login(
+        _usernameController.text,
+        _passwordController.text,
+      );
+      if (loginResponse != null) {
+        authProvider.setToken(loginResponse.token!);
+         GoRouter.of(context).go('/');
+      } else {
+        print('登录失败');
+      }
+      setState(() => _loading = false);
     }
   }
 

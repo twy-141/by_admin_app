@@ -68,7 +68,7 @@ class ApiService {
   Future<void> _onRequest(RequestOptions options, RequestInterceptorHandler handler) async {
     final token = await StorageService.getString('token');
     if (token != null) {
-      options.headers['Authorization'] = token;
+      options.headers['token'] = token;
     }
     handler.next(options);
   }
