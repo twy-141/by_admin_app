@@ -14,7 +14,7 @@ class DrListResult {
     bool? hasPreviousPage;
     bool? isFirstPage;
     bool? isLastPage;
-    List<ListElement>? list;
+    List<DrListElement>? list;
     int? navigateFirstPage;
     int? navigateLastPage;
     int? navigatePages;
@@ -55,7 +55,7 @@ class DrListResult {
         hasPreviousPage: json["hasPreviousPage"],
         isFirstPage: json["isFirstPage"],
         isLastPage: json["isLastPage"],
-        list: json["list"] == null ? [] : List<ListElement>.from(json["list"]!.map((x) => ListElement.fromJson(x))),
+        list: json["list"] == null ? [] : List<DrListElement>.from(json["list"]!.map((x) => DrListElement.fromJson(x))),
         navigateFirstPage: json["navigateFirstPage"],
         navigateLastPage: json["navigateLastPage"],
         navigatePages: json["navigatePages"],
@@ -92,7 +92,7 @@ class DrListResult {
     };
 }
 
-class ListElement {
+class DrListElement {
     String? addressInfo;
     double? carMoney;
     double? carServerPercent;
@@ -134,7 +134,7 @@ class ListElement {
     String? userTag;
     String? vipName;
 
-    ListElement({
+    DrListElement({
         this.addressInfo,
         this.carMoney,
         this.carServerPercent,
@@ -177,7 +177,7 @@ class ListElement {
         this.vipName,
     });
 
-    factory ListElement.fromJson(Map<String, dynamic> json) => ListElement(
+    factory DrListElement.fromJson(Map<String, dynamic> json) => DrListElement(
         addressInfo: json["addressInfo"],
         carMoney: json["carMoney"],
         carServerPercent: json["carServerPercent"],
