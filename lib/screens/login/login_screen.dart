@@ -38,8 +38,15 @@ class _LoginScreenState extends State<LoginScreen> {
         _passwordController.text,
       );
       if (loginResponse != null) {
+        final Map<String, dynamic> userInfo = {
+          'daziId': loginResponse.daziId,
+          'nickname': loginResponse.nickname,
+          'avatar': loginResponse.avatar,
+          'token': loginResponse.token,
+        };
         authProvider.setToken(loginResponse.token!);
-         GoRouter.of(context).go('/');
+        authProvider.setUserInfo(userInfo);
+        GoRouter.of(context).go('/');
       } else {
         print('登录失败');
       }

@@ -6,11 +6,10 @@ class UserService {
   final ApiService _api = ApiService();
 
   // 1. 获取用户信息
-  Future<User?> getUserProfile(int userId) async {
+  Future<User?> getUserInfo(int daziId) async {
     try {
       final response = await _api.get<User>(
-        '/user/profile', // 你的API端点
-        queryParameters: {'id': userId}, // 查询参数
+        '/wxapi/wxuserDazi/drInfo/$daziId', // 你的API端点
         fromJson: (data) => User.fromJson(data), // 使用你的User模型
       );
 

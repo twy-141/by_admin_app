@@ -63,10 +63,14 @@ class MyApp extends StatelessWidget {
           return MaterialApp.router(
             title: '伴友之家',
             theme: ThemeData(
-              scaffoldBackgroundColor: Color(0xffF8F9FD),
+              scaffoldBackgroundColor: Color(0xffF8F9FD), // 设置背景颜色
               primarySwatch: Colors.blue, // 设置主题颜色
               splashColor: Colors.transparent, // 去除水波纹效果
               highlightColor: Colors.transparent, // 去除高亮效果
+              appBarTheme: AppBarTheme(
+                scrolledUnderElevation: 0.0, // 0.0 表示没有阴影
+                 backgroundColor: Colors.white, // 设置 AppBar 的背景颜色
+              ),
             ),
             routerConfig: _router, // 使用 GoRouter 的路由配置
           );

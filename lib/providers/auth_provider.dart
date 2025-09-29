@@ -1,3 +1,4 @@
+import 'package:by_admin_app/models/user.dart';
 import 'package:by_admin_app/services/storage_service.dart';
 import 'package:flutter/foundation.dart';
 
@@ -6,6 +7,10 @@ class AuthProvider with ChangeNotifier {
   String? _token;
 
   String? get token => _token;
+  
+  User? _userInfo;
+
+  User? get userInfo => _userInfo;
 
   /// 判断是否已登录
   bool get isAuth => _token != null;
@@ -13,6 +18,11 @@ class AuthProvider with ChangeNotifier {
   Future<void> setToken(String token) async {
     _token = token;
     await StorageService.saveString('token', _token!);
+    notifyListeners(); // 关键：通知更新
+  }
+   Future<void> setUserInfo(dynamic info) async {
+    _userInfo = info;
+    await StorageService.saveObject('userInfo', info);
     notifyListeners(); // 关键：通知更新
   }
   Future<void> logout() async{

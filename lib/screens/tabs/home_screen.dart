@@ -37,11 +37,7 @@ class _HomeScreenState extends State<HomeScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        scrolledUnderElevation: 0.0, // 0.0 表示没有阴影
-        title: const Text('我的订单'),
-        backgroundColor: Colors.white,
-      ),
+      appBar: AppBar(title: const Text('我的订单')),
       body: Padding(
         padding: const EdgeInsets.all(12.0),
         child: ListView.separated(
@@ -152,24 +148,41 @@ class _HomeScreenState extends State<HomeScreen> {
               ),
             ],
           ),
+          SizedBox(height: 26.h),
           Row(
             children: [
               Text(
                 '总价${item.payMoney}',
                 style: TextStyle(fontSize: 13.sp, color: Color(0xff682525)),
               ),
-              // Container()
+              Spacer(),
+              GestureDetector(
+                onTap: () {
+                  print('查看订单');
+                },
+                child: Container(
+                  width: 89.w,
+                  height: 32.h,
+                  decoration: BoxDecoration(
+                    borderRadius: BorderRadius.circular(40.r),
+                    border: Border.all(color: Color(0xff682525)),
+                  ),
+                  child: Center(
+                    child: Text(
+                      '查看订单',
+                      style: TextStyle(
+                        fontSize: 13.sp,
+                        color: Color(0xff682525),
+                      ),
+                    ),
+                  ),
+                ),
+              ),
             ],
           ),
         ],
       ),
     );
-    // return ListTile(
-    //   title: Text('${item.payMoney}'),
-    //   onTap: () {
-    //     // context.go('/order/$index');
-    //   },
-    // );
   }
 
   /// 状态容器

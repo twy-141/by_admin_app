@@ -45,7 +45,7 @@ class ApiService {
   ApiService._internal() {
     _dio = Dio(
       BaseOptions(
-        baseUrl: 'https://qmdzapi.qunmeng.club/',
+        baseUrl: 'https://api.bykj.life',
         connectTimeout: const Duration(seconds: 30),
         receiveTimeout: const Duration(seconds: 30),
         headers: {
