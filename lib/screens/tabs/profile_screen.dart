@@ -9,6 +9,9 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:provider/provider.dart';
 import 'package:go_router/go_router.dart';
+import 'dart:async';
+import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 
 class ProfileScreen extends StatefulWidget {
   const ProfileScreen({super.key});
@@ -18,8 +21,25 @@ class ProfileScreen extends StatefulWidget {
 }
 
 class _ProfileScreenState extends State<ProfileScreen> {
+  static const platform = MethodChannel('com.example.by_admin_app/battery');
   final UserService _userService = UserService();
   User _info = User();
+
+  String _batteryLevel = 'Unknown battery level.';
+
+  Future<void> _getBatteryLevel() async {
+    String batteryLevel;
+    try {
+      final result = await platform.invokeMethod<int>('getBatteryLevel');
+      batteryLevel = 'Battery level at $result % .';
+    } on PlatformException catch (e) {
+      batteryLevel = "Failed to get battery level: '${e.message}'.";
+    }
+
+    setState(() {
+      _batteryLevel = batteryLevel;
+    });
+  }
 
   Future<void> _getInfo() async {
     // 读取存储的对象
@@ -77,8 +97,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
                                 CircularProgressIndicator(),
                             errorWidget: (context, url, error) =>
                                 Icon(Icons.error),
-                            width: 62.w, // 设置固定宽度
-                            height: 62.w, // 设置固定高度（与宽度相同）
+                            width: 62.w,
+                            // 设置固定宽度
+                            height: 62.w,
+                            // 设置固定高度（与宽度相同）
                             fit: BoxFit.cover,
                           ),
                         ),
@@ -96,6 +118,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                                     color: Color(0xff050100),
                                   ),
                                 ),
+                                SizedBox(width: 4.w),
                                 if (_info.onlineStatus == 2)
                                   SvgPicture.asset(
                                     'assets/images/my/zx.svg',
@@ -188,6 +211,16 @@ class _ProfileScreenState extends State<ProfileScreen> {
               ),
             ),
             Text('测试'),
+            Column(
+              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+              children: [
+                ElevatedButton(
+                  onPressed: _getBatteryLevel,
+                  child: const Text('Get Battery Level'),
+                ),
+                Text(_batteryLevel),
+              ],
+            ),
           ],
         ),
       ),
