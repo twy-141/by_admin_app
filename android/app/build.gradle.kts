@@ -54,3 +54,6 @@ android {
 flutter {
     source = "../.."
 }
+dependencies {
+    implementation("com.amap.api:3dmap:10.0.600")
+}

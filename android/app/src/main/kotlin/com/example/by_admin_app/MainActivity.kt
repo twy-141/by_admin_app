@@ -1,9 +1,8 @@
 package com.example.by_admin_app
-
+import com.amap.api.maps.MapView
 import io.flutter.embedding.android.FlutterActivity
 import io.flutter.embedding.engine.FlutterEngine
 import io.flutter.plugin.common.MethodChannel
-import androidx.annotation.NonNull
 import android.content.Context
 import android.content.ContextWrapper
 import android.content.Intent
@@ -11,12 +10,25 @@ import android.content.IntentFilter
 import android.os.BatteryManager
 import android.os.Build.VERSION
 import android.os.Build.VERSION_CODES
+import android.view.View
+import com.amap.api.maps.CameraUpdateFactory
+import com.amap.api.maps.MapsInitializer
+import com.amap.api.maps.model.LatLng
+import io.flutter.plugin.common.BinaryMessenger
+import io.flutter.plugin.common.StandardMessageCodec
+import io.flutter.plugin.platform.PlatformView
+import io.flutter.plugin.platform.PlatformViewFactory
 
 class MainActivity : FlutterActivity(){
     private val CHANNEL = "com.example.by_admin_app/battery"
 
-    override fun configureFlutterEngine(@NonNull flutterEngine: FlutterEngine) {
+    override fun configureFlutterEngine(flutterEngine: FlutterEngine) {
         super.configureFlutterEngine(flutterEngine)
+
+        flutterEngine.platformViewsController.registry.registerViewFactory(
+            "com.example.by_admin_app/mapview",
+            AmapViewFactory(flutterEngine.dartExecutor.binaryMessenger)
+        )
 
         // 获取电池
         MethodChannel(flutterEngine.dartExecutor.binaryMessenger, CHANNEL).setMethodCallHandler {
@@ -48,5 +60,35 @@ class MainActivity : FlutterActivity(){
         }
 
         return batteryLevel
+    }
+
+    // 创建地图
+    class AmapViewFactory(private val messenger: BinaryMessenger) :
+        PlatformViewFactory(StandardMessageCodec.INSTANCE) {
+        override fun create(context: Context, viewId: Int, args: Any?): PlatformView {
+            return AmapPlatformView(context, args as? Map<String, Any>)
+        }
+    }
+    // 创建地图
+    class AmapPlatformView(context: Context, params: Map<String, Any>?) : PlatformView {
+        private val mapView: MapView
+
+        init {
+            // ✅ 必须在创建 MapView 前调用隐私合规接口
+            MapsInitializer.updatePrivacyShow(context, true, true)
+            MapsInitializer.updatePrivacyAgree(context, true)
+
+            mapView = MapView(context)
+            mapView.onCreate(null)
+
+            val aMap = mapView.map
+            val lat = params?.get("lat") as? Double ?: 39.9
+            val lng = params?.get("lng") as? Double ?: 116.3
+            val camera = CameraUpdateFactory.newLatLngZoom(LatLng(lat, lng), 12f)
+            aMap.moveCamera(camera)
+        }
+
+        override fun getView(): View = mapView
+        override fun dispose() { mapView.onDestroy() }
     }
 }

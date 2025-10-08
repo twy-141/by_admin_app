@@ -25,6 +25,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
   final UserService _userService = UserService();
   User _info = User();
 
+
   String _batteryLevel = 'Unknown battery level.';
 
   Future<void> _getBatteryLevel() async {
@@ -221,9 +222,26 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 Text(_batteryLevel),
               ],
             ),
+            _buildMapView( 39.90960,  // 北京坐标
+               116.397228,)
           ],
         ),
       ),
     );
   }
+
+  Widget _buildMapView(double lat, double lng) {
+    return SizedBox(
+      height: 300.h, // 设置一个固定高度
+      child: AndroidView(
+        viewType: 'com.example.by_admin_app/mapview',
+        creationParams: <String, dynamic>{
+          "lat": lat,
+          "lng": lng,
+        },
+        creationParamsCodec: const StandardMessageCodec(),
+      ),
+    );
+  }
+
 }
