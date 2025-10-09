@@ -1,4 +1,5 @@
 package com.example.by_admin_app
+
 import com.amap.api.maps.MapView
 import io.flutter.embedding.android.FlutterActivity
 import io.flutter.embedding.engine.FlutterEngine
@@ -11,6 +12,8 @@ import android.os.BatteryManager
 import android.os.Build.VERSION
 import android.os.Build.VERSION_CODES
 import android.view.View
+import com.amap.api.location.AMapLocationClient
+import com.amap.api.location.AMapLocationClientOption
 import com.amap.api.maps.CameraUpdateFactory
 import com.amap.api.maps.MapsInitializer
 import com.amap.api.maps.model.LatLng
@@ -19,7 +22,7 @@ import io.flutter.plugin.common.StandardMessageCodec
 import io.flutter.plugin.platform.PlatformView
 import io.flutter.plugin.platform.PlatformViewFactory
 
-class MainActivity : FlutterActivity(){
+class MainActivity : FlutterActivity() {
     private val CHANNEL = "com.example.by_admin_app/battery"
 
     override fun configureFlutterEngine(flutterEngine: FlutterEngine) {
@@ -30,10 +33,11 @@ class MainActivity : FlutterActivity(){
             AmapViewFactory(flutterEngine.dartExecutor.binaryMessenger)
         )
 
-        // 获取电池
-        MethodChannel(flutterEngine.dartExecutor.binaryMessenger, CHANNEL).setMethodCallHandler {
-                call, result ->
-            if (call.method == "getBatteryLevel") {
+        MethodChannel(
+            flutterEngine.dartExecutor.binaryMessenger,
+            CHANNEL
+        ).setMethodCallHandler { call, result ->
+            if (call.method == "getBatteryLevel") { // 获取电量
                 val batteryLevel = getBatteryLevel()
 
                 if (batteryLevel != -1) {
@@ -41,6 +45,8 @@ class MainActivity : FlutterActivity(){
                 } else {
                     result.error("UNAVAILABLE", "Battery level not available.", null)
                 }
+            } else if (call.method == "getSingleLocation") {
+                requestSingleLocation(result)
             } else {
                 result.notImplemented()
             }
@@ -49,14 +55,52 @@ class MainActivity : FlutterActivity(){
         }
     }
 
+    // 添加单次定位方法
+    private fun requestSingleLocation(result: MethodChannel.Result) {
+        val locationClient = AMapLocationClient(this)
+        val locationOption = AMapLocationClientOption().apply {
+            locationMode = AMapLocationClientOption.AMapLocationMode.Hight_Accuracy
+            isOnceLocation = true
+            isNeedAddress = true
+            isOnceLocationLatest = true
+        }
+        locationClient.setLocationOption(locationOption)
+
+        locationClient.setLocationListener { location ->
+            if (location != null && location.errorCode == 0) {
+                val locationMap = mapOf(
+                    "latitude" to location.latitude,
+                    "longitude" to location.longitude,
+                    "address" to (location.address ?: ""),
+                    "city" to (location.city ?: "")
+                )
+                result.success(locationMap)
+            } else {
+                result.error("LOCATION_ERROR",
+                    "定位失败: ${location?.errorCode ?: "未知错误"}",
+                    null)
+            }
+            locationClient.onDestroy()
+        }
+
+        locationClient.startLocation()
+    }
+
     private fun getBatteryLevel(): Int {
         val batteryLevel: Int
         if (VERSION.SDK_INT >= VERSION_CODES.LOLLIPOP) {
             val batteryManager = getSystemService(Context.BATTERY_SERVICE) as BatteryManager
             batteryLevel = batteryManager.getIntProperty(BatteryManager.BATTERY_PROPERTY_CAPACITY)
         } else {
-            val intent = ContextWrapper(applicationContext).registerReceiver(null, IntentFilter(Intent.ACTION_BATTERY_CHANGED))
-            batteryLevel = intent!!.getIntExtra(BatteryManager.EXTRA_LEVEL, -1) * 100 / intent.getIntExtra(BatteryManager.EXTRA_SCALE, -1)
+            val intent = ContextWrapper(applicationContext).registerReceiver(
+                null,
+                IntentFilter(Intent.ACTION_BATTERY_CHANGED)
+            )
+            batteryLevel =
+                intent!!.getIntExtra(BatteryManager.EXTRA_LEVEL, -1) * 100 / intent.getIntExtra(
+                    BatteryManager.EXTRA_SCALE,
+                    -1
+                )
         }
 
         return batteryLevel
@@ -69,6 +113,7 @@ class MainActivity : FlutterActivity(){
             return AmapPlatformView(context, args as? Map<String, Any>)
         }
     }
+
     // 创建地图
     class AmapPlatformView(context: Context, params: Map<String, Any>?) : PlatformView {
         private val mapView: MapView
@@ -89,6 +134,8 @@ class MainActivity : FlutterActivity(){
         }
 
         override fun getView(): View = mapView
-        override fun dispose() { mapView.onDestroy() }
+        override fun dispose() {
+            mapView.onDestroy()
+        }
     }
 }

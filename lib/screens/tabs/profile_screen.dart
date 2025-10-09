@@ -7,6 +7,7 @@ import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:flutter_svg/flutter_svg.dart';
+import 'package:permission_handler/permission_handler.dart';
 import 'package:provider/provider.dart';
 import 'package:go_router/go_router.dart';
 import 'dart:async';
@@ -21,13 +22,63 @@ class ProfileScreen extends StatefulWidget {
 }
 
 class _ProfileScreenState extends State<ProfileScreen> {
-  static const platform = MethodChannel('com.example.by_admin_app/battery');
+  static MethodChannel platform = MethodChannel('com.example.by_admin_app/battery');
   final UserService _userService = UserService();
   User _info = User();
 
-
   String _batteryLevel = 'Unknown battery level.';
 
+  // 获取单次定位
+   Future<Map<String, dynamic>?> getCurrentLocation() async {
+    try {
+      final result = await platform.invokeMethod('getSingleLocation');
+      if (result == null) return null;
+
+      // 安全地转换类型
+      if (result is Map<Object?, Object?>) {
+        return result.cast<String, dynamic>();
+      }
+      return result as Map<String, dynamic>?;
+    } on PlatformException catch (e) {
+      print("获取定位失败: ${e.message}");
+      return null;
+    } on Exception catch (e) {
+      print("定位异常: $e");
+      return null;
+    }
+  }
+
+  void _getLocation() async {
+    // 检查并请求定位权限
+    var status = await Permission.location.status; // 检查权限状态
+    if (!status.isGranted) { // 检查权限状态
+      status = await Permission.location.request(); // 请求权限
+    }
+
+    if (status.isGranted) { // 检查权限状态
+      // 权限已获得，可以安全地调用定位
+      try {
+        final location = await getCurrentLocation();
+        if (location != null) {
+          print('定位成功:');
+          print('纬度: ${location['latitude']}');
+          print('经度: ${location['longitude']}');
+          print('地址: ${location['address']}');
+          print('城市: ${location['city']}');
+        } else {
+          print('获取定位失败');
+        }
+      } catch (e) {
+        print('定位过程出错: $e');
+      }
+      // 处理定位结果
+    } else {
+      // 权限被拒绝
+      print('定位权限被拒绝');
+    }
+  }
+
+  // 获取电量
   Future<void> _getBatteryLevel() async {
     String batteryLevel;
     try {
@@ -220,28 +271,32 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   child: const Text('Get Battery Level'),
                 ),
                 Text(_batteryLevel),
+                ElevatedButton(
+                  onPressed: _getLocation,
+                  child: const Text('Get Location'),
+                ),
               ],
             ),
-            _buildMapView( 39.90960,  // 北京坐标
-               116.397228,)
+            // _buildMapView( 39.90960,  // 北京坐标
+            //    116.397228,)
           ],
         ),
       ),
     );
   }
 
-  Widget _buildMapView(double lat, double lng) {
-    return SizedBox(
-      height: 300.h, // 设置一个固定高度
-      child: AndroidView(
-        viewType: 'com.example.by_admin_app/mapview',
-        creationParams: <String, dynamic>{
-          "lat": lat,
-          "lng": lng,
-        },
-        creationParamsCodec: const StandardMessageCodec(),
-      ),
-    );
-  }
-
+  // 创建地图视图(已完成✅)
+  // Widget _buildMapView(double lat, double lng) {
+  //   return SizedBox(
+  //     height: 300.h, // 设置一个固定高度
+  //     child: AndroidView(
+  //       viewType: 'com.example.by_admin_app/mapview',
+  //       creationParams: <String, dynamic>{
+  //         "lat": lat,
+  //         "lng": lng,
+  //       },
+  //       creationParamsCodec: const StandardMessageCodec(),
+  //     ),
+  //   );
+  // }
 }

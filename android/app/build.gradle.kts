@@ -55,5 +55,5 @@ flutter {
     source = "../.."
 }
 dependencies {
-    implementation("com.amap.api:3dmap:10.0.600")
+    implementation("com.amap.api:navi-3dmap-location-search:10.0.700_3dmap10.0.700_loc6.4.5_sea9.7.2")
 }
