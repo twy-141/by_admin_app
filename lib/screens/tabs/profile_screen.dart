@@ -277,8 +277,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 ),
               ],
             ),
-            // _buildMapView( 39.90960,  // 北京坐标
-            //    116.397228,)
+            // _buildMapView()
           ],
         ),
       ),
@@ -286,15 +285,15 @@ class _ProfileScreenState extends State<ProfileScreen> {
   }
 
   // 创建地图视图(已完成✅)
-  // Widget _buildMapView(double lat, double lng) {
+  // Widget _buildMapView() {
   //   return SizedBox(
   //     height: 300.h, // 设置一个固定高度
   //     child: AndroidView(
   //       viewType: 'com.example.by_admin_app/mapview',
-  //       creationParams: <String, dynamic>{
-  //         "lat": lat,
-  //         "lng": lng,
-  //       },
+  //       // creationParams: <String, dynamic>{
+  //       //   "lat": lat,
+  //       //   "lng": lng,
+  //       // },
   //       creationParamsCodec: const StandardMessageCodec(),
   //     ),
   //   );

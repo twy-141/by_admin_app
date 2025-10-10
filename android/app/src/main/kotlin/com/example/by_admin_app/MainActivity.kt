@@ -57,6 +57,9 @@ class MainActivity : FlutterActivity() {
 
     // 添加单次定位方法
     private fun requestSingleLocation(result: MethodChannel.Result) {
+        AMapLocationClient.updatePrivacyShow(this, true, true)
+        AMapLocationClient.updatePrivacyAgree(this, true)
+
         val locationClient = AMapLocationClient(this)
         val locationOption = AMapLocationClientOption().apply {
             locationMode = AMapLocationClientOption.AMapLocationMode.Hight_Accuracy
@@ -76,9 +79,11 @@ class MainActivity : FlutterActivity() {
                 )
                 result.success(locationMap)
             } else {
-                result.error("LOCATION_ERROR",
+                result.error(
+                    "LOCATION_ERROR",
                     "定位失败: ${location?.errorCode ?: "未知错误"}",
-                    null)
+                    null
+                )
             }
             locationClient.onDestroy()
         }
@@ -127,6 +132,9 @@ class MainActivity : FlutterActivity() {
             mapView.onCreate(null)
 
             val aMap = mapView.map
+            // 开启定位蓝点
+            aMap.isMyLocationEnabled = true
+
             val lat = params?.get("lat") as? Double ?: 39.9
             val lng = params?.get("lng") as? Double ?: 116.3
             val camera = CameraUpdateFactory.newLatLngZoom(LatLng(lat, lng), 12f)
