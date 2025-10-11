@@ -39,6 +39,9 @@ class ApiException implements Exception {
 class ApiService {
   static final ApiService _instance = ApiService._internal();
   factory ApiService() => _instance;
+
+  // 添加认证失败回调
+  Function()? onAuthFailed;
   
   late final Dio _dio;
 
@@ -59,9 +62,9 @@ class ApiService {
 
   void _setupInterceptors() {
     _dio.interceptors.add(InterceptorsWrapper(
-      onRequest: _onRequest,
-      onResponse: _onResponse,
-      onError: _onError,
+      onRequest: _onRequest, // 请求处理
+      onResponse: _onResponse, // 响应处理
+      onError: _onError, // 错误处理
     ));
   }
 
@@ -81,6 +84,8 @@ class ApiService {
     if (e.response?.statusCode == 401) {
       await StorageService.remove('token');
       // 这里可以添加跳转到登录页的逻辑
+      // 调用认证失败回调
+      onAuthFailed?.call();
     }
     handler.next(e);
   }
@@ -134,6 +139,16 @@ class ApiService {
     }
 
     final responseData = response.data as Map<String, dynamic>;
+
+    // 检查业务状态码是否为401
+    final int businessCode = responseData['code'] ?? 0;
+    if (businessCode == 401) {
+      // 处理业务层面的401认证失败
+      StorageService.remove('token');
+      // 可以在这里添加跳转到登录页的逻辑
+      // 调用认证失败回调
+      onAuthFailed?.call();
+    }
     
     // 如果不需要解析 data 字段，直接返回整个响应
     if (fromJson == null) {

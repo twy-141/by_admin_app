@@ -1,4 +1,5 @@
 import 'package:by_admin_app/providers/tab_provider.dart';
+import 'package:by_admin_app/services/api_service.dart';
 import 'package:by_admin_app/tab_container.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
@@ -48,6 +49,12 @@ class MyApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      ApiService().onAuthFailed = () {
+        // 使用 GoRouter 跳转到登录页
+        _router.go('/login');
+      };
+    });
     return MultiProvider(
       // 在应用的顶层提供我们所需的 Provider
       providers: [
