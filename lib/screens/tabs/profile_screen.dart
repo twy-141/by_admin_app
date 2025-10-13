@@ -22,14 +22,16 @@ class ProfileScreen extends StatefulWidget {
 }
 
 class _ProfileScreenState extends State<ProfileScreen> {
-  static MethodChannel platform = MethodChannel('com.example.by_admin_app/battery');
+  static MethodChannel platform = MethodChannel(
+    'com.example.by_admin_app/battery',
+  );
   final UserService _userService = UserService();
   User _info = User();
 
   String _batteryLevel = 'Unknown battery level.';
 
   // 获取单次定位
-   Future<Map<String, dynamic>?> getCurrentLocation() async {
+  Future<Map<String, dynamic>?> getCurrentLocation() async {
     try {
       final result = await platform.invokeMethod('getSingleLocation');
       if (result == null) return null;
@@ -51,11 +53,13 @@ class _ProfileScreenState extends State<ProfileScreen> {
   void _getLocation() async {
     // 检查并请求定位权限
     var status = await Permission.location.status; // 检查权限状态
-    if (!status.isGranted) { // 检查权限状态
+    if (!status.isGranted) {
+      // 检查权限状态
       status = await Permission.location.request(); // 请求权限
     }
 
-    if (status.isGranted) { // 检查权限状态
+    if (status.isGranted) {
+      // 检查权限状态
       // 权限已获得，可以安全地调用定位
       try {
         final location = await getCurrentLocation();
@@ -171,34 +175,12 @@ class _ProfileScreenState extends State<ProfileScreen> {
                                   ),
                                 ),
                                 SizedBox(width: 4.w),
-                                if (_info.onlineStatus == 2)
-                                  SvgPicture.asset(
-                                    'assets/images/my/zx.svg',
-                                    width: 48.w,
-                                    height: 20.h,
-                                  ),
-                                if (_info.onlineStatus == 0)
-                                  SvgPicture.asset(
-                                    'assets/images/my/lx.svg',
-                                    width: 48.w,
-                                    height: 20.h,
-                                  ),
+                                _buildStatusImage, // 状态图标
                               ],
                             ),
                             Row(
                               children: [
-                                if (_info.onlineStatus == 2)
-                                  SvgPicture.asset(
-                                    'assets/images/my/zx_lv.svg',
-                                    width: 15.w,
-                                    height: 15.w,
-                                  ),
-                                if (_info.onlineStatus == 0)
-                                  SvgPicture.asset(
-                                    'assets/images/my/lx_h.svg',
-                                    width: 15.w,
-                                    height: 15.w,
-                                  ),
+                                _buildStatusIcon, // 状态图标
                                 Text(
                                   _info.onlineStatus == 2
                                       ? '在线 (可服务)'
@@ -262,24 +244,203 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 ),
               ),
             ),
-            Text('测试'),
-            Column(
-              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-              children: [
-                ElevatedButton(
-                  onPressed: _getBatteryLevel,
-                  child: const Text('Get Battery Level'),
-                ),
-                Text(_batteryLevel),
-                ElevatedButton(
-                  onPressed: _getLocation,
-                  child: const Text('Get Location'),
-                ),
-              ],
+            SizedBox(height: 12.h),
+            Padding(
+              padding: EdgeInsets.symmetric(horizontal: 11.w),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  // 服务与提现
+                  Row(
+                    children: [
+                      _buildServiceAndWithdrawalCenter('服务更新'),
+                      Spacer(),
+                      _buildServiceAndWithdrawalCenter('提现中心', 2),
+                    ],
+                  ),
+                  SizedBox(height: 12.h),
+                  Text(
+                    '资金明细',
+                    style: TextStyle(fontSize: 15.sp, color: Color(0xff050100)),
+                  ),
+                  SizedBox(height: 8.h),
+                  Container(
+                    height: 80.h,
+                    decoration: BoxDecoration(
+                      borderRadius: BorderRadius.circular(8.r),
+                      color: Colors.white,
+                    ),
+                    child: GridView.count(
+                      crossAxisCount: 4,
+                      physics: const NeverScrollableScrollPhysics(),
+                      padding: EdgeInsets.zero,
+                      children: [
+                        _buildGridItem('收益明细'),
+                        _buildGridItem('提现记录'),
+                        _buildGridItem('账户余额'),
+                      ],
+                    ),
+                  ),
+                  SizedBox(height: 12.h),
+                  Text(
+                    '常用功能',
+                    style: TextStyle(fontSize: 15.sp, color: Color(0xff050100)),
+                  ),
+                  SizedBox(height: 8.h),
+                  Container(
+                    height: 80.h,
+                    decoration: BoxDecoration(
+                      borderRadius: BorderRadius.circular(8.r),
+                      color: Colors.white,
+                    ),
+                    child: GridView.count(
+                      crossAxisCount: 4,
+                      physics: const NeverScrollableScrollPhysics(),
+                      padding: EdgeInsets.zero,
+                      children: [
+                        _buildGridItem('邀请用户'),
+                        _buildGridItem('邀请伴友'),
+                        _buildGridItem('我的二维码'),
+                        _buildGridItem('我的团队'),
+                      ],
+                    ),
+                  ),
+                  SizedBox(height: 12.h),
+                  Text(
+                    '其他功能',
+                    style: TextStyle(fontSize: 15.sp, color: Color(0xff050100)),
+                  ),
+                  SizedBox(height: 8.h),
+                  Container(
+                    height: 80.h,
+                    decoration: BoxDecoration(
+                      borderRadius: BorderRadius.circular(8.r),
+                      color: Colors.white,
+                    ),
+                    child: GridView.count(
+                      crossAxisCount: 4,
+                      physics: const NeverScrollableScrollPhysics(),
+                      padding: EdgeInsets.zero,
+                      children: [
+                        _buildGridItem('紧急联系人'),
+                        _buildGridItem('动态管理'),
+                        _buildGridItem('帮助中心'),
+                        _buildGridItem('设置'),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
             ),
+
+            // Column(
+            //   mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+            //   children: [
+            //     ElevatedButton(
+            //       onPressed: _getBatteryLevel,
+            //       child: const Text('Get Battery Level'),
+            //     ),
+            //     Text(_batteryLevel),
+            //     ElevatedButton(
+            //       onPressed: _getLocation,
+            //       child: const Text('Get Location'),
+            //     ),
+            //   ],
+            // ),
             // _buildMapView()
           ],
         ),
+      ),
+    );
+  }
+
+  // 抽离的网格项组件
+  Widget _buildGridItem(String title) {
+    return SizedBox(
+      width: 80.w,
+      height: 80.h,
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          SvgPicture.asset(
+            'assets/images/my/fwgx.svg',
+            width: 30.w,
+            height: 30.w,
+          ),
+          Text(title),
+        ],
+      ),
+    );
+  }
+
+  // 状态图标
+  Widget get _buildStatusIcon {
+    if (_info.onlineStatus == 2) {
+      return SvgPicture.asset(
+        'assets/images/my/zx_lv.svg',
+        width: 15.w,
+        height: 15.w,
+      );
+    } else {
+      return SvgPicture.asset(
+        'assets/images/my/lx_h.svg',
+        width: 15.w,
+        height: 15.w,
+      );
+    }
+  }
+
+  // 状态图标
+  Widget get _buildStatusImage {
+    if (_info.onlineStatus == 2) {
+      return SvgPicture.asset(
+        'assets/images/my/zx.svg',
+        width: 48.w,
+        height: 20.h,
+      );
+    } else {
+      return SvgPicture.asset(
+        'assets/images/my/lx.svg',
+        width: 48.w,
+        height: 20.h,
+      );
+    }
+  }
+
+  // 服务和提现中心
+  Widget _buildServiceAndWithdrawalCenter(String title, [int type = 1]) {
+    return Container(
+      width: 170.w,
+      height: 80.h,
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(10.r),
+        color: Color(0xffF0F5FF),
+      ),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                title,
+                style: TextStyle(fontSize: 18.sp, color: Color(0xff35363A)),
+              ),
+              SizedBox(height: 11.h),
+              Text(
+                type == 1 ? '可更新位置和时间' : '方便快捷',
+                style: TextStyle(fontSize: 12.sp, color: Color(0xff85868A)),
+              ),
+            ],
+          ),
+          type == 2 ? SizedBox(width: 12.w) : SizedBox(),
+          SvgPicture.asset(
+            'assets/images/my/fwgx.svg',
+            width: 46.w,
+            height: 46.w,
+          ),
+        ],
       ),
     );
   }
