@@ -275,9 +275,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
                       physics: const NeverScrollableScrollPhysics(),
                       padding: EdgeInsets.zero,
                       children: [
-                        _buildGridItem('收益明细'),
-                        _buildGridItem('提现记录'),
-                        _buildGridItem('账户余额'),
+                        _buildGridItem('收益明细', 'symx.svg'),
+                        _buildGridItem('提现记录', 'dsmx.svg'),
+                        // _buildGridItem('账户余额'),
                       ],
                     ),
                   ),
@@ -298,10 +298,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
                       physics: const NeverScrollableScrollPhysics(),
                       padding: EdgeInsets.zero,
                       children: [
-                        _buildGridItem('邀请用户'),
-                        _buildGridItem('邀请伴友'),
-                        _buildGridItem('我的二维码'),
-                        _buildGridItem('我的团队'),
+                        _buildGridItem('邀请用户', 'yqyh.svg'),
+                        _buildGridItem('邀请伴友', 'yqby.svg'),
+                        _buildGridItem('我的二维码', 'qrcode.svg'),
+                        _buildGridItem('我的团队', 'team.svg'),
                       ],
                     ),
                   ),
@@ -322,10 +322,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
                       physics: const NeverScrollableScrollPhysics(),
                       padding: EdgeInsets.zero,
                       children: [
-                        _buildGridItem('紧急联系人'),
-                        _buildGridItem('动态管理'),
-                        _buildGridItem('帮助中心'),
-                        _buildGridItem('设置'),
+                        _buildGridItem('紧急联系人', 'jjlxr.svg'),
+                        // _buildGridItem('动态管理'),
+                        _buildGridItem('帮助中心', 'bz.svg'),
+                        _buildGridItem('设置', 'set.svg'),
                       ],
                     ),
                   ),
@@ -355,19 +355,18 @@ class _ProfileScreenState extends State<ProfileScreen> {
   }
 
   // 抽离的网格项组件
-  Widget _buildGridItem(String title) {
+  Widget _buildGridItem(String title, [String icon = 'fwgx.svg']) {
     return SizedBox(
       width: 80.w,
       height: 80.h,
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          SvgPicture.asset(
-            'assets/images/my/fwgx.svg',
-            width: 30.w,
-            height: 30.w,
+          SvgPicture.asset('assets/images/my/$icon', width: 30.w, height: 30.w),
+          Text(
+            title,
+            style: TextStyle(fontSize: 13.sp, color: Color(0xff333333)),
           ),
-          Text(title),
         ],
       ),
     );
