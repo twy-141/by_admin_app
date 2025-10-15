@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'dart:io';
 
 import 'package:by_admin_app/models/user.dart';
 import 'package:by_admin_app/services/storage_service.dart';
@@ -13,6 +14,8 @@ import 'package:go_router/go_router.dart';
 import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter/gestures.dart';
+import 'package:flutter/foundation.dart';
 
 class ProfileScreen extends StatefulWidget {
   const ProfileScreen({super.key});
@@ -34,6 +37,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
   Future<Map<String, dynamic>?> getCurrentLocation() async {
     try {
       final result = await platform.invokeMethod('getSingleLocation');
+      print('获取定位成功:');
       if (result == null) return null;
 
       // 安全地转换类型
@@ -51,16 +55,15 @@ class _ProfileScreenState extends State<ProfileScreen> {
   }
 
   void _getLocation() async {
-    // 检查并请求定位权限
-    var status = await Permission.location.status; // 检查权限状态
-    if (!status.isGranted) {
-      // 检查权限状态
-      status = await Permission.location.request(); // 请求权限
-    }
+    // 检查权限状态
+    var status = await Permission.location.status;
 
+    // 如果权限被拒绝或永久拒绝，尝试请求权限
+    if (status.isDenied || status.isPermanentlyDenied) {
+      status = await Permission.location.request();
+    }
     if (status.isGranted) {
-      // 检查权限状态
-      // 权限已获得，可以安全地调用定位
+      // 权限已获得，执行定位逻辑
       try {
         final location = await getCurrentLocation();
         if (location != null) {
@@ -75,7 +78,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
       } catch (e) {
         print('定位过程出错: $e');
       }
-      // 处理定位结果
+    } else if (status.isPermanentlyDenied) {
+      // 用户永久拒绝了权限，引导用户去设置中开启
+      print('定位权限被永久拒绝，请在设置中手动开启');
+      openAppSettings();
     } else {
       // 权限被拒绝
       print('定位权限被拒绝');
@@ -115,6 +121,46 @@ class _ProfileScreenState extends State<ProfileScreen> {
         print('获取用户信息失败');
       }
     }
+  }
+
+  Future<String?> _showBottomSheet(BuildContext context) {
+    return showModalBottomSheet<String>(
+      backgroundColor: Colors.white,
+      context: context,
+      isScrollControlled: true,
+      isDismissible: true,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
+      ),
+      builder: (context) {
+        return Container(
+          width: MediaQuery.of(context).size.width,
+          padding: EdgeInsets.all(16),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text("服务状态", style: TextStyle(fontSize: 18)),
+              SizedBox(height: 20),
+              ListTile(
+                title: Center(child: Text("在线（可服务）")),
+                onTap: () => Navigator.pop(context, "选项一"),
+              ),
+              ListTile(
+                title: Center(child: Text("离线（服务中）")),
+                onTap: () => Navigator.pop(context, "选项二"),
+              ),
+              Divider(height: 1),
+              ListTile(
+                title: Center(
+                  child: Text("取消", style: TextStyle(color: Colors.red)),
+                ),
+                onTap: () => Navigator.pop(context),
+              ),
+            ],
+          ),
+        );
+      },
+    );
   }
 
   @override
@@ -178,24 +224,34 @@ class _ProfileScreenState extends State<ProfileScreen> {
                                 _buildStatusImage, // 状态图标
                               ],
                             ),
-                            Row(
-                              children: [
-                                _buildStatusIcon, // 状态图标
-                                Text(
-                                  _info.onlineStatus == 2
-                                      ? '在线 (可服务)'
-                                      : '离线 (服务中)',
-                                  style: TextStyle(
-                                    fontSize: 14.sp,
-                                    color: Color(0xff54504D),
+                            InkWell(
+                              onTap: () async {
+                                final result = await _showBottomSheet(context);
+                                if (result != null) {
+                                  print("用户选择了: $result");
+                                } else {
+                                  print("用户取消了");
+                                }
+                              },
+                              child: Row(
+                                children: [
+                                  _buildStatusIcon, // 状态图标
+                                  Text(
+                                    _info.onlineStatus == 2
+                                        ? '在线 (可服务)'
+                                        : '离线 (服务中)',
+                                    style: TextStyle(
+                                      fontSize: 14.sp,
+                                      color: Color(0xff54504D),
+                                    ),
                                   ),
-                                ),
-                              ],
+                                ],
+                              ),
                             ),
                           ],
                         ),
                         Spacer(),
-                        GestureDetector(
+                        InkWell(
                           onTap: () {
                             // context.go('/editProfile');
                           },
@@ -337,6 +393,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
             //   mainAxisAlignment: MainAxisAlignment.spaceEvenly,
             //   children: [
             //     ElevatedButton(
+            //       onPressed: () => _showBottomSheet(context),
+            //       child: Text("打开底部弹窗"),
+            //     ),
+            //     ElevatedButton(
             //       onPressed: _getBatteryLevel,
             //       child: const Text('Get Battery Level'),
             //     ),
@@ -347,7 +407,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
             //     ),
             //   ],
             // ),
-            // _buildMapView()
+            _buildMapView(),
           ],
         ),
       ),
@@ -445,17 +505,31 @@ class _ProfileScreenState extends State<ProfileScreen> {
   }
 
   // 创建地图视图(已完成✅)
-  // Widget _buildMapView() {
-  //   return SizedBox(
-  //     height: 300.h, // 设置一个固定高度
-  //     child: AndroidView(
-  //       viewType: 'com.example.by_admin_app/mapview',
-  //       // creationParams: <String, dynamic>{
-  //       //   "lat": lat,
-  //       //   "lng": lng,
-  //       // },
-  //       creationParamsCodec: const StandardMessageCodec(),
-  //     ),
-  //   );
-  // }
+  Widget _buildMapView() {
+    return SizedBox(
+      height: 300.h,
+      child: Builder(
+        builder: (context) {
+          if (Platform.isAndroid) {
+            return AndroidView(
+              viewType: 'com.example.by_admin_app/mapview',
+              creationParamsCodec: const StandardMessageCodec(),
+            );
+          } else if (Platform.isIOS) {
+            return UiKitView(
+              viewType: 'com.example.by_admin_app/mapview',
+              gestureRecognizers: <Factory<OneSequenceGestureRecognizer>>{
+                Factory<OneSequenceGestureRecognizer>(
+                  () => EagerGestureRecognizer(),
+                ),
+              },
+              creationParamsCodec: const StandardMessageCodec(),
+            );
+          } else {
+            return const Center(child: Text('不支持的平台'));
+          }
+        },
+      ),
+    );
+  }
 }

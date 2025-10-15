@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:provider/provider.dart';
 import 'package:go_router/go_router.dart';
+import 'package:pull_to_refresh/pull_to_refresh.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -14,17 +15,55 @@ class HomeScreen extends StatefulWidget {
 
 class _HomeScreenState extends State<HomeScreen> {
   final OrderService _orderService = OrderService();
-  List<DrListElement> _list = [];
+  List<DrListElement> _list = []; // 列表数据
+  int _pageNum = 1; // 当前页码
+  final int _pageSize = 5; // 每页数量
+  bool _hasMore = true; // 是否还有更多
+  final RefreshController _refreshController = RefreshController(
+    initialRefresh: false,
+  );
 
   Future<void> _getList() async {
-    final res = await _orderService.daZiList(1, 10);
+    final res = await _orderService.daZiList(_pageNum, _pageSize);
     if (res != null) {
       setState(() {
-        _list = res.list!;
+        if (_pageNum == 1) {
+          _list = res.list ?? [];
+        } else {
+          _list.addAll(res.list ?? []);
+        }
+        // 更安全的分页计算
+        if (res.total != null && res.list != null) {
+          final totalPage = (res.total! / _pageSize).ceil();
+          _hasMore = _pageNum < totalPage;
+        } else {
+          _hasMore = false;
+        }
       });
       print('获取列表成功');
     } else {
       print('获取列表失败');
+    }
+  }
+
+  void _onRefresh() async {
+    setState(() {
+      _pageNum = 1; // 重置为第一页
+    });
+    await _getList();
+    _refreshController.refreshCompleted(); // 完成刷新
+    _refreshController.resetNoData(); // 重置为无更多数据
+  }
+
+  void _onLoading() async {
+    if (_hasMore) {
+      setState(() {
+        _pageNum++;
+      });
+      await _getList();
+      _refreshController.loadComplete();
+    } else {
+      _refreshController.loadNoData();
     }
   }
 
@@ -40,12 +79,37 @@ class _HomeScreenState extends State<HomeScreen> {
       appBar: AppBar(title: const Text('我的订单')),
       body: Padding(
         padding: const EdgeInsets.all(12.0),
-        child: ListView.separated(
-          itemBuilder: itemBuilder,
-          itemCount: _list.length,
-          separatorBuilder: (context, index) {
-            return SizedBox(height: 12.h); // 设置列间距
-          },
+        child: SmartRefresher(
+          controller: _refreshController,
+          enablePullUp: true,
+          enablePullDown: true,
+          onRefresh: _onRefresh,
+          onLoading: _onLoading,
+          footer: CustomFooter(
+            builder: (context, mode) {
+              Widget body;
+              if (mode == LoadStatus.idle) {
+                body = Text('上拉加载');
+              } else if (mode == LoadStatus.loading) {
+                body = Text('加载中...');
+              } else if (mode == LoadStatus.failed) {
+                body = Text('加载失败');
+              } else if (mode == LoadStatus.canLoading) {
+                body = Text('松手开始加载');
+              } else {
+                // LoadStatus.noMore
+                body = Text('没有更多数据');
+              }
+              return SizedBox(height: 55.0, child: Center(child: body));
+            },
+          ),
+          child: ListView.separated(
+            itemBuilder: itemBuilder,
+            itemCount: _list.length,
+            separatorBuilder: (context, index) {
+              return SizedBox(height: 12.h);
+            },
+          ),
         ),
       ),
     );

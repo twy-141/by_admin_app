@@ -32,6 +32,7 @@ class TabContainer extends StatelessWidget {
           // 通过Provider更新索引，触发界面重建
           Provider.of<TabProvider>(context, listen: false).updateIndex(index);
         },
+        backgroundColor: Colors.white,
         items: const [
           BottomNavigationBarItem(
             icon: Icon(Icons.home_outlined),
