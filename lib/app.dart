@@ -1,4 +1,5 @@
 import 'package:by_admin_app/providers/tab_provider.dart';
+import 'package:by_admin_app/screens/order/order_detail_screen.dart';
 import 'package:by_admin_app/services/api_service.dart';
 import 'package:by_admin_app/tab_container.dart';
 import 'package:flutter/material.dart';
@@ -24,6 +25,12 @@ class MyApp extends StatelessWidget {
         path: '/login',
         builder: (BuildContext context, GoRouterState state) {
           return const LoginScreen();
+        },
+      ),
+       GoRoute(
+        path: '/orderDetail',
+        builder: (BuildContext context, GoRouterState state) {
+          return const OrderDetailScreen();
         },
       ),
     ],

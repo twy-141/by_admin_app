@@ -43,6 +43,7 @@ dependencies:
   cached_network_image: ^3.4.1
   permission_handler: ^12.0.1
   pull_to_refresh: ^2.0.0
+  fluttertoast: ^9.0.0
 
 dev_dependencies:
   flutter_test:
@@ -72,6 +73,7 @@ flutter:
   assets:
     - assets/images/
     - assets/images/my/
+    - assets/images/order/
   # https://flutter.dev/to/resolution-aware-images
 
   # For details regarding adding assets from package dependencies, see

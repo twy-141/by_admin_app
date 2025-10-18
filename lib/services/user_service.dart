@@ -5,7 +5,7 @@ import 'package:by_admin_app/services/api_service.dart';
 class UserService {
   final ApiService _api = ApiService();
 
-  // 1. 获取用户信息
+  /// 1. 获取用户信息
   Future<User?> getUserInfo(int daziId) async {
     try {
       final response = await _api.get<User>(
@@ -26,15 +26,18 @@ class UserService {
   }
 
   // 2. 更新用户信息
-  Future<bool> updateUserProfile(User user) async {
+  Future<dynamic> updateUserProfile(dynamic params) async {
     try {
-      final response = await _api.post<User>(
-        '/user/update',
-        data: user.toJson(), // 将User对象转换为JSON
-        fromJson: (data) => User.fromJson(data),
+      final response = await _api.post<dynamic>(
+        '/wxapi/wxuserDazi/edit',
+        data: params,
       );
-
-      return response.success;
+      if (response.success) {
+        return true;
+      } else {
+        print('更新用户信息失败: ${response.msg} (code: ${response.code})');
+        return false;
+      }
     } on ApiException catch (e) {
       print('更新用户信息失败: $e');
       return false;

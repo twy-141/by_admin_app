@@ -1,4 +1,3 @@
-import 'dart:convert';
 import 'dart:io';
 
 import 'package:by_admin_app/models/user.dart';
@@ -16,6 +15,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter/gestures.dart';
 import 'package:flutter/foundation.dart';
+import 'package:fluttertoast/fluttertoast.dart';
 
 class ProfileScreen extends StatefulWidget {
   const ProfileScreen({super.key});
@@ -33,7 +33,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
   String _batteryLevel = 'Unknown battery level.';
 
-  // 获取单次定位
+  /// 获取单次定位
   Future<Map<String, dynamic>?> getCurrentLocation() async {
     try {
       final result = await platform.invokeMethod('getSingleLocation');
@@ -54,6 +54,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
     }
   }
 
+  /// 获取单次定位
   void _getLocation() async {
     // 检查权限状态
     var status = await Permission.location.status;
@@ -103,6 +104,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
     });
   }
 
+  /// 获取用户信息
   Future<void> _getInfo() async {
     // 读取存储的对象
     final storedUserInfo = await StorageService.getObject('userInfo');
@@ -123,6 +125,31 @@ class _ProfileScreenState extends State<ProfileScreen> {
     }
   }
 
+  ///更新用户信息
+  Future<void> _updateInfo(String status) async {
+    final res = await _userService.updateUserProfile({'onlineStatus': status});
+    if (res != null) {
+      Fluttertoast.showToast(
+        msg: "服务状态更新成功",
+        gravity: ToastGravity.CENTER,
+        backgroundColor: Colors.black54,
+        textColor: Colors.white,
+        fontSize: 16.0.sp,
+      );
+      // 刷新用户信息
+      _getInfo();
+    } else {
+      Fluttertoast.showToast(
+        msg: "服务状态更新失败",
+        gravity: ToastGravity.CENTER,
+        backgroundColor: Colors.black54,
+        textColor: Colors.white,
+        fontSize: 16.0.sp,
+      );
+    }
+  }
+
+  /// 显示服务状态底部弹窗
   Future<String?> _showBottomSheet(BuildContext context) {
     return showModalBottomSheet<String>(
       backgroundColor: Colors.white,
@@ -143,18 +170,23 @@ class _ProfileScreenState extends State<ProfileScreen> {
               SizedBox(height: 20),
               ListTile(
                 title: Center(child: Text("在线（可服务）")),
-                onTap: () => Navigator.pop(context, "选项一"),
+                onTap: () => Navigator.pop(context, '2'),
               ),
               ListTile(
-                title: Center(child: Text("离线（服务中）")),
-                onTap: () => Navigator.pop(context, "选项二"),
+                title: Center(child: Text("下线（休息中）")),
+                onTap: () => Navigator.pop(context, '0'),
               ),
               Divider(height: 1),
-              ListTile(
-                title: Center(
-                  child: Text("取消", style: TextStyle(color: Colors.red)),
+              Container(
+                width: double.infinity,
+                padding: EdgeInsets.symmetric(vertical: 12.h, horizontal: 24.w),
+                child: ElevatedButton(
+                  onPressed: () => Navigator.pop(context),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Color(0xFFf0f0f0),
+                  ),
+                  child: Text("取消", style: TextStyle(color: Colors.black)),
                 ),
-                onTap: () => Navigator.pop(context),
               ),
             ],
           ),
@@ -228,9 +260,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                               onTap: () async {
                                 final result = await _showBottomSheet(context);
                                 if (result != null) {
-                                  print("用户选择了: $result");
-                                } else {
-                                  print("用户取消了");
+                                  await _updateInfo(result);
                                 }
                               },
                               child: Row(
@@ -239,7 +269,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                                   Text(
                                     _info.onlineStatus == 2
                                         ? '在线 (可服务)'
-                                        : '离线 (服务中)',
+                                        : '下线 (休息中)',
                                     style: TextStyle(
                                       fontSize: 14.sp,
                                       color: Color(0xff54504D),
@@ -407,7 +437,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
             //     ),
             //   ],
             // ),
-            _buildMapView(),
+            // _buildMapView(),
           ],
         ),
       ),

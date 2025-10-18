@@ -17,7 +17,7 @@ class _HomeScreenState extends State<HomeScreen> {
   final OrderService _orderService = OrderService();
   List<DrListElement> _list = []; // 列表数据
   int _pageNum = 1; // 当前页码
-  final int _pageSize = 5; // 每页数量
+  final int _pageSize = 3; // 每页数量
   bool _hasMore = true; // 是否还有更多
   final RefreshController _refreshController = RefreshController(
     initialRefresh: false,
@@ -77,39 +77,44 @@ class _HomeScreenState extends State<HomeScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(title: const Text('我的订单')),
-      body: Padding(
-        padding: const EdgeInsets.all(12.0),
-        child: SmartRefresher(
-          controller: _refreshController,
-          enablePullUp: true,
-          enablePullDown: true,
-          onRefresh: _onRefresh,
-          onLoading: _onLoading,
-          footer: CustomFooter(
-            builder: (context, mode) {
-              Widget body;
-              if (mode == LoadStatus.idle) {
-                body = Text('上拉加载');
-              } else if (mode == LoadStatus.loading) {
-                body = Text('加载中...');
-              } else if (mode == LoadStatus.failed) {
-                body = Text('加载失败');
-              } else if (mode == LoadStatus.canLoading) {
-                body = Text('松手开始加载');
-              } else {
-                // LoadStatus.noMore
-                body = Text('没有更多数据');
-              }
-              return SizedBox(height: 55.0, child: Center(child: body));
-            },
-          ),
-          child: ListView.separated(
-            itemBuilder: itemBuilder,
-            itemCount: _list.length,
-            separatorBuilder: (context, index) {
-              return SizedBox(height: 12.h);
-            },
-          ),
+      body: SmartRefresher(
+        controller: _refreshController,
+        enablePullUp: true,
+        enablePullDown: true,
+        onRefresh: _onRefresh,
+        onLoading: _onLoading,
+        header: ClassicHeader(
+          releaseText: '下拉刷新',
+          completeText: '刷新完成',
+          idleText: '下拉刷新',
+          refreshingText: '正在刷新...',
+          failedText: '刷新失败',
+        ),
+        footer: CustomFooter(
+          builder: (context, mode) {
+            Widget body;
+            if (mode == LoadStatus.idle) {
+              body = Text('上拉加载');
+            } else if (mode == LoadStatus.loading) {
+              body = Text('加载中...');
+            } else if (mode == LoadStatus.failed) {
+              body = Text('加载失败');
+            } else if (mode == LoadStatus.canLoading) {
+              body = Text('松手开始加载');
+            } else {
+              // LoadStatus.noMore
+              body = Text('没有更多数据');
+            }
+            return SizedBox(height: 55.0, child: Center(child: body));
+          },
+        ),
+        child: ListView.separated(
+          padding: EdgeInsets.all(12.0), // 在这里加内边距
+          itemBuilder: itemBuilder,
+          itemCount: _list.length,
+          separatorBuilder: (context, index) {
+            return SizedBox(height: 12.h);
+          },
         ),
       ),
     );
@@ -220,9 +225,10 @@ class _HomeScreenState extends State<HomeScreen> {
                 style: TextStyle(fontSize: 13.sp, color: Color(0xff682525)),
               ),
               Spacer(),
-              GestureDetector(
+              InkWell(
                 onTap: () {
-                  print('查看订单');
+                  // 导航到订单详情页面
+                  GoRouter.of(context).push('/orderDetail?orderId=${item.forderId}');
                 },
                 child: Container(
                   width: 89.w,
